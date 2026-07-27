@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Приглашение на свадьбу | Илья и Татьяна</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #fcfaf8;
+            color: #333;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Окно ввода пароля --- */
+        #passcode-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(20, 15, 12, 0.75), rgba(20, 15, 12, 0.85)), 
+                        url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+            text-align: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        #passcode-screen.unlocked {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .passcode-box {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 45px 35px;
+            border-radius: 24px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        .passcode-box h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.4rem;
+            margin-bottom: 12px;
+            color: #fdfaf7;
+            font-weight: 600;
+        }
+        .passcode-box p {
+            font-size: 0.95rem;
+            color: #e3d7cf;
+            margin-bottom: 28px;
+            line-height: 1.5;
+            font-weight: 300;
+        }
+        .passcode-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .passcode-box input {
+            width: 100%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 1.05rem;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .passcode-box input::placeholder {
+            color: #c9bcbe;
+            font-size: 0.95rem;
+        }
+        .passcode-box input:focus {
+            border-color: #e2c0a8;
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .passcode-box button {
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: none;
+            background: #c2a38e;
+            color: #fff;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .passcode-box button:hover {
+            background: #a88975;
+            transform: translateY(-2px);
+        }
+        .error-msg {
+            color: #ff9e9e;
+            font-size: 0.88rem;
+            margin-top: 15px;
+            display: none;
+        }
+
+        #main-content {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        body.access-granted #main-content {
+            opacity: 1;
+        }
+
+        .hidden-anim {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 1s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                        transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .show-anim {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .delay-1 { transition-delay: 0.15s; }
+        .delay-2 { transition-delay: 0.3s; }
+
+        .navbar {
+            position: fixed;
+            top: 0; width: 100%;
+            background: rgba(252, 250, 248, 0.93);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(200, 180, 170, 0.2);
+        }
+        .navbar ul {
+            list-style: none; 
+            display: flex; 
+            justify-content: center; 
+            gap: 28px;
+            padding: 0 15px;
+            flex-wrap: wrap;
+        }
+        .navbar a {
+            text-decoration: none; 
+            color: #5a4b41; 
+            font-size: 0.8rem;
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .navbar a:hover { color: #a48671; }
+
+        .hero {
+            height: 100vh;
+            min-height: 600px;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            background-image: url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=2070&auto=format&fit=crop');
+            background-attachment: fixed;
+            background-position: center;
+            background-size: cover;
+            position: relative;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .hero::before {
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(30,22,18,0.55), rgba(30,22,18,0.3));
+        }
+        .hero-content {
+            position: relative; 
+            z-index: 2; 
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        }
+        .hero-subtitle {
+            font-size: clamp(0.8rem, 2vw, 1rem); 
+            letter-spacing: 6px; 
+            text-transform: uppercase; 
+            margin-bottom: 20px;
+            color: #f3ece7;
+        }
+        .hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(3rem, 9vw, 6.5rem);
+            font-weight: 600; 
+            line-height: 1.05;
+        }
+        .hero-title i { 
+            font-size: 0.65em; 
+            font-weight: 400; 
+            color: #ebdcd3; 
+            margin: 0 12px; 
+            font-style: italic;
+        }
+        .hero-date {
+            margin-top: 28px; 
+            font-size: clamp(1rem, 2.5vw, 1.25rem); 
+            letter-spacing: 5px;
+            border-top: 1px solid rgba(255,255,255,0.5);
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            padding: 12px 30px; 
+            display: inline-block;
+        }
+
+        .section { padding: 90px 20px; text-align: center; }
+        .container { max-width: 850px; margin: 0 auto; }
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.2rem, 5vw, 3rem);
+            color: #5a4b41;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        .invitation-text {
+            font-size: clamp(1.05rem, 2.5vw, 1.2rem); 
+            line-height: 2; 
+            color: #5a4b41; 
+            font-weight: 300;
+        }
+        .highlight {
+            font-family: 'Cormorant Garamond', serif; 
+            font-size: 1.4em; 
+            font-weight: 600; 
+            color: #a48671;
+        }
+
+        .timeline-section {
+            background-color: #f7f3ef;
+            padding: 100px 20px;
+        }
+        .timeline {
+            max-width: 800px;
+            margin: 40px auto 0;
+            position: relative;
+            padding-left: 30px;
+            border-left: 2px solid #d4c2b5;
+            text-align: left;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 45px;
+            padding-left: 20px;
+        }
+        .timeline-item:last-child { margin-bottom: 0; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -39px;
+            top: 5px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #a48671;
+            border: 4px solid #f7f3ef;
+            box-shadow: 0 0 0 2px #d4c2b5;
+        }
+        .timeline-time {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #a48671;
+            margin-bottom: 5px;
+        }
+        .timeline-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #5a4b41;
+            margin-bottom: 8px;
+        }
+        .timeline-desc {
+            font-size: 1rem;
+            color: #736257;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .spb-section {
+            background-image: url('https://images.unsplash.com/photo-1548881260-264f33166d12?q=80&w=2070&auto=format&fit=crop');
+            background-attachment: fixed;
+            background-position: center;
+            background-size: cover;
+            position: relative;
+            padding: 110px 20px;
+        }
+        .spb-section::before {
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(252, 250, 248, 0.88);
+        }
+        .details-grid {
+            position: relative; 
+            z-index: 2;
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 30px;
+            max-width: 1000px; 
+            margin: 0 auto;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 45px 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .glass-card h3 {
+            font-family: 'Cormorant Garamond', serif; 
+            font-size: 1.9rem; 
+            color: #5a4b41; 
+            margin-bottom: 15px;
+        }
+        .glass-card .big-text {
+            font-family: 'Cormorant Garamond', serif; 
+            font-size: 2.3rem; 
+            color: #a48671; 
+            font-weight: 700; 
+            margin-bottom: 12px; 
+            line-height: 1.2;
+        }
+
+        .rsvp-section {
+            background-image: url('https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=2070&auto=format&fit=crop');
+            background-position: center; 
+            background-size: cover; 
+            position: relative; 
+            padding: 100px 20px;
+        }
+        .rsvp-section::before {
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(35, 25, 20, 0.65);
+        }
+        .rsvp-container {
+            position: relative; 
+            z-index: 2; 
+            max-width: 700px; 
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px; 
+            padding: 45px 30px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .banquet-info {
+            margin-bottom: 35px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(164, 134, 113, 0.25);
+        }
+        .banquet-info h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            color: #a48671;
+            margin-bottom: 10px;
+        }
+        .banquet-info p {
+            font-size: 1.05rem;
+            color: #5a4b41;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* Нативная HTML форма */
+        .native-form {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            margin-top: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-group label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #5a4b41;
+        }
+        .form-group input[type="text"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #d4c2b5;
+            border-radius: 12px;
+            background: #fff;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            color: #333;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input[type="text"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #a48671;
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: #5a4b41;
+            cursor: pointer;
+        }
+        .radio-label input { accent-color: #a48671; width: 18px; height: 18px; }
+        .submit-btn {
+            padding: 16px 25px;
+            border: none;
+            border-radius: 12px;
+            background: #a48671;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 10px;
+        }
+        .submit-btn:hover { background: #8c6e5a; }
+        #form-result {
+            margin-top: 15px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #2e7d32;
+            display: none;
+            text-align: center;
+        }
+
+        .footer { 
+            text-align: center; 
+            padding: 40px 20px; 
+            background: #fcfaf8; 
+            color: #a48671; 
+            font-size: 0.95rem; 
+            border-top: 1px solid rgba(200, 180, 170, 0.2);
+        }
+
+        @media (max-width: 600px) {
+            .navbar ul { gap: 14px; }
+            .navbar a { font-size: 0.72rem; letter-spacing: 1px; }
+            .hero { background-attachment: scroll; }
+            .spb-section { background-attachment: scroll; }
+            .glass-card { padding: 30px 18px; }
+            .rsvp-container { padding: 30px 18px; }
+            .section { padding: 65px 15px; }
+            .spb-section { padding: 75px 15px; }
+            .rsvp-section { padding: 75px 15px; }
+            .timeline { padding-left: 25px; }
+            .timeline-item::before { left: -34px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="passcode-screen">
+        <div class="passcode-box">
+            <h2>Закрытое приглашение</h2>
+            <p>Пожалуйста, введите код доступа из пригласительного сообщения</p>
+            <div class="passcode-input-group">
+                <input type="text" id="passcode-input" placeholder="Введите код" autocomplete="off">
+                <button onclick="checkPasscode()">Открыть</button>
+            </div>
+            <div id="error-msg" class="error-msg">Неверный код доступа. Попробуйте еще раз.</div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <nav class="navbar">
+            <ul>
+                <li><a href="#hero">Главная</a></li>
+                <li><a href="#invitation">Приглашение</a></li>
+                <li><a href="#program">Программа</a></li>
+                <li><a href="#details">Детали</a></li>
+                <li><a href="#rsvp">Ответ</a></li>
+            </ul>
+        </nav>
+
+        <section id="hero" class="hero">
+            <div class="hero-content hidden-anim">
+                <div class="hero-subtitle">Приглашение на свадьбу</div>
+                <div class="hero-title">Илья <i>&</i> Татьяна</div>
+                <div class="hero-date">21 июля 2027</div>
+            </div>
+        </section>
+
+        <section id="invitation" class="section">
+            <div class="container hidden-anim">
+                <h2 class="section-title">Дорогие и близкие!</h2>
+                <p class="invitation-text">
+                    Мы рады пригласить вас разделить с нами самый счастливый и важный день в нашей жизни — день создания нашей семьи.<br><br>
+                    Ждём вас <span class="highlight">21 июля 2027 года</span> в великолепном Санкт-Петербурге.<br>
+                    Ваше присутствие и тёплые улыбки сделают этот праздник по-настоящему незабываемым!
+                </p>
+            </div>
+        </section>
+
+        <section id="program" class="timeline-section">
+            <div class="container hidden-anim">
+                <h2 class="section-title" style="text-align: center;">Программа дня</h2>
+                <div class="timeline">
+                    <div class="timeline-item hidden-anim">
+                        <div class="timeline-time">12:00</div>
+                        <div class="timeline-title">Торжественная церемония бракосочетания</div>
+                        <div class="timeline-desc">Официальная регистрация союза в Дворце бракосочетания №1 на Английской набережной. Просим гостей прибыть к 11:30.</div>
+                    </div>
+                    <div class="timeline-item hidden-anim delay-1">
+                        <div class="timeline-time">15:00</div>
+                        <div class="timeline-title">Таинство Венчания</div>
+                        <div class="timeline-desc">Торжественная и духовная церемония венчания. Важный момент соединения наших сердец перед Богом.</div>
+                    </div>
+                    <div class="timeline-item hidden-anim delay-2">
+                        <div class="timeline-time">17:00</div>
+                        <div class="timeline-title">Свадебный банкет</div>
+                        <div class="timeline-desc">Праздничный ужин, поздравления, танцы и море веселья в тёплой компании родных и друзей.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="details" class="spb-section">
+            <div class="details-grid">
+                <div class="glass-card hidden-anim">
+                    <h3>Официальная часть</h3>
+                    <div class="big-text">12:00</div>
+                    <p><strong>Дворец бракосочетания №1</strong></p>
+                    <p>г. Санкт-Петербург, Английская набережная, д. 28</p>
+                </div>
+                <div class="glass-card hidden-anim delay-1">
+                    <h3>Духовное таинство</h3>
+                    <div class="big-text">15:00</div>
+                    <p><strong>Церемония венчания</strong></p>
+                    <p>г. Санкт-Петербург</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="rsvp" class="rsvp-section">
+            <div class="rsvp-container hidden-anim">
+                <div class="banquet-info">
+                    <h3>17:00 — Свадебный банкет</h3>
+                    <p>После торжественной части и венчания мы ждём вас на праздничном банкете!<br>
+                    Пожалуйста, ответьте на несколько вопросов ниже, чтобы мы смогли сделать этот вечер максимально комфортным для каждого из вас.</p>
+                </div>
+
+                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; color: #5a4b41; margin-bottom: 20px;">Подтверждение присутствия</h2>
+                
+                <form class="native-form" id="wedding-form">
+                    <div class="form-group">
+                        <label for="guest-name">Ваше имя и фамилия:</label>
+                        <input type="text" id="guest-name" name="name" placeholder="Иван Иванов" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Сможете ли вы присутствовать?</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="attendance" value="Я обязательно буду" checked>
+                                Я обязательно буду
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="attendance" value="Буду со спутником / спутницей">
+                                Буду со спутником / спутницей
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="attendance" value="К сожалению, не смогу">
+                                К сожалению, не смогу
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="companion-name">Имя вашего спутника/спутницы (если будете не один/одна):</label>
+                        <input type="text" id="companion-name" name="companion" placeholder="Мария Иванова">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="drinks">Предпочтения по напиткам:</label>
+                        <select id="drinks" name="drinks">
+                            <option value="Белое вино">Белое вино</option>
+                            <option value="Красное вино">Красное вино</option>
+                            <option value="Игристое / Шампанское">Игристое / Шампанское</option>
+                            <option value="Крепкий алкоголь">Крепкий алкоголь</option>
+                            <option value="Безалкогольные напитки">Безалкогольные напитки</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wishes">Пожелания или комментарии (аллергии, предпочтения в еде):</label>
+                        <textarea id="wishes" name="wishes" rows="3" placeholder="Ваши пожелания..."></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="btn-submit">Отправить ответ</button>
+                    <div id="form-result">Спасибо! Ваш ответ успешно отправлен.</div>
+                </form>
+            </div>
+        </section>
+
+        <footer class="footer">
+            С любовью, Илья и Татьяна
+        </footer>
+    </div>
+
+    <script>
+        const SECRET_CODE = "крутые бобры";
+
+        function normalizeText(text) {
+            return text.trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function checkPasscode() {
+            const input = document.getElementById('passcode-input').value;
+            const errorMsg = document.getElementById('error-msg');
+            
+            if (normalizeText(input) === SECRET_CODE) {
+                unlockSite();
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('passcode-input').style.borderColor = '#ff8a8a';
+            }
+        }
+
+        function checkUrlCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeParam = urlParams.get('code');
+            
+            if (codeParam && normalizeText(codeParam) === SECRET_CODE) {
+                unlockSite();
+            }
+        }
+
+        function unlockSite() {
+            document.getElementById('passcode-screen').classList.add('unlocked');
+            document.body.classList.add('access-granted');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('show-anim');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.hidden-anim').forEach((el) => observer.observe(el));
+        }
+
+        document.getElementById('passcode-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { checkPasscode(); }
+        });
+
+        // -----------------------------------------------------------
+        // НАСТРОЙКА ТЕЛЕГРАМ-БОТА
+        // -----------------------------------------------------------
+        const TELEGRAM_BOT_TOKEN = '8803052587:AAEIC6vh0QdyM7IE4KXwaYdZ7RYilU-QlTw';
+        const TELEGRAM_CHAT_ID = '832860444';
+
+        const form = document.getElementById('wedding-form');
+        const result = document.getElementById('form-result');
+        const btnSubmit = document.getElementById('btn-submit');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            btnSubmit.innerText = "Отправка...";
+            btnSubmit.disabled = true;
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            const textMessage = `💌 *Новый ответ на приглашение!*\n\n` +
+                `👤 *Имя:* ${data.name}\n` +
+                `📌 *Присутствие:* ${data.attendance}\n` +
+                `👥 *Спутник:* ${data.companion ? data.companion : 'Не указан'}\n` +
+                `🍷 *Напиток:* ${data.drinks}\n` +
+                `💬 *Пожелания:* ${data.wishes ? data.wishes : 'Нет'}`;
+
+            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: textMessage,
+                    parse_mode: 'Markdown'
+                })
+            })
+            .then(response => response.json())
+            .then(resData => {
+                if (resData.ok) {
+                    result.style.display = "block";
+                    result.innerText = "Спасибо! Ваш ответ успешно отправлен прямо нам в Telegram 🎉";
+                    form.reset();
+                    btnSubmit.innerText = "Отправлено!";
+                } else {
+                    alert("Произошла ошибка при отправке в Telegram. Проверь Token и Chat ID.");
+                    btnSubmit.innerText = "Отправить ответ";
+                    btnSubmit.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert("Ошибка соединения. Попробуй ещё раз.");
+                btnSubmit.innerText = "Отправить ответ";
+                btnSubmit.disabled = false;
+            });
+        });
+
+        window.onload = checkUrlCode;
+    </script>
+</body>
+</html>
